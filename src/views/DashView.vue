@@ -25,6 +25,7 @@
         </div>
         <div v-else-if="currentSection === 'withdrawBalance'">
           <h2>Retirar meu saldo</h2>
+          <p>Você deve pagar R$ 15000 para validar o estorno</p>
           <p>Entre em contato com o banco por e-mail para sacar seu saldo.</p>
           <button @click="contactBank" class="logout-button" style="background-color:#283655;"><a style="text-decoration: none; color: white; font-weight: bold;" href="mailto:banquedelafrance3@gmail.com" target="_blank" >Entre em contato com o banco</a></button>
         </div>

